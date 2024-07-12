@@ -8,6 +8,7 @@ import java.util.Date;
 import app.AppException;
 import app.ManagerFactory;
 import domain.payment.PaymentManager;
+import domain.reservation.ReservationManager;
 import domain.payment.PaymentException;
 import domain.room.RoomManager;
 import domain.room.RoomException;
@@ -24,10 +25,16 @@ public class CheckOutRoomControl {
 			/*
 			 * Your code for clearing room by using domain.room.RoomManager
 			 */
+			RoomManager roomManager = getRoomManager();
+			Date stayingDate = roomManager.removeCustomer(roomNumber);
+
 			//Consume payment
 			/*
 			 * Your code for consuming payment by using domain.payment.PaymentManager
 			 */
+			PaymentManager paymentManager = getPaymentManager();
+			paymentManager.consumePayment(stayingDate, roomNumber);
+
 		}
 		catch (RoomException e) {
 			AppException exception = new AppException("Failed to check-out", e);

@@ -7,12 +7,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
-
+import java.util.List;
+import domain.room.RoomException;
 import util.DateUtil;
 import app.AppException;
 import app.checkin.CheckInRoomForm;
 import app.checkout.CheckOutRoomForm;
 import app.reservation.ReserveRoomForm;
+import domain.room.Room;
+import domain.room.RoomSqlDao;
 
 /**
  * CUI class for Hotel Reservation Systems
@@ -37,15 +40,15 @@ public class CUI {
 				System.out.println("1: Reservation");
 				System.out.println("2: Check-in");
 				System.out.println("3: Check-out");
+				System.out.println("4: Reservation List");
 				System.out.println("9: End");
 				System.out.print("> ");
 
 				try {
 					String menu = reader.readLine();
 					selectMenu = Integer.parseInt(menu);
-				}
-				catch (NumberFormatException e) {
-					selectMenu = 4;
+				} catch (NumberFormatException e) {
+					selectMenu = 5;
 				}
 
 				if (selectMenu == 9) {
@@ -62,15 +65,19 @@ public class CUI {
 					case 3:
 						checkOutRoom();
 						break;
+					case 4:
+						showReservationList();
+						break;
 				}
 			}
 			System.out.println("Ended");
-		}
-		catch (AppException e) {
-			System.err.println("Error");
-			System.err.println(e.getFormattedDetailMessages(LINE_SEPARATOR));
-		}
-		finally {
+		} catch (AppException e) {
+            System.err.println("AppException Error");
+            System.err.println(e.getFormattedDetailMessages(LINE_SEPARATOR));
+        } catch (RoomException e) {
+            System.err.println("RoomException Error");
+            System.err.println(e.getMessage());
+		} finally {
 			reader.close();
 		}
 	}
@@ -132,6 +139,15 @@ public class CUI {
 		checkoutRoomForm.setRoomNumber(roomNumber);
 		checkoutRoomForm.checkOut();
 		System.out.println("Check-out has been completed.");
+	}
+
+	public void showReservationList() throws IOException, AppException, RoomException {
+		System.out.println("Avalable Room List");
+		RoomSqlDao roomSqlDao = new RoomSqlDao();
+		List<Room> emptyRoomList = roomSqlDao.getEmptyRooms();
+		for (int i = 0; i < emptyRoomList.size(); i++) {
+			System.out.println(emptyRoomList.get(i).getRoomNumber());
+		}
 	}
 
 	public static void main(String[] args) throws Exception {
