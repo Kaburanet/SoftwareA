@@ -15,7 +15,11 @@ import util.DateUtil;
 import app.AppException;
 import app.checkin.CheckInRoomForm;
 import app.checkout.CheckOutRoomForm;
+import app.reservation.ReserveRoomControl;
 import app.reservation.ReserveRoomForm;
+import domain.reservation.Reservation;
+import domain.reservation.ReservationException;
+import domain.reservation.ReservationManager;
 import domain.room.Room;
 import domain.room.RoomSqlDao;
 
@@ -44,6 +48,7 @@ public class CUI {
 				System.out.println("3: Check-out");
 				System.out.println("4: Empty room List");
 				System.out.println("5: Reservation List");
+				System.out.println("6: Cancel Reservation");
 				System.out.println("9: End");
 				System.out.print("> ");
 
@@ -51,7 +56,7 @@ public class CUI {
 					String menu = reader.readLine();
 					selectMenu = Integer.parseInt(menu);
 				} catch (NumberFormatException e) {
-					selectMenu = 5;
+					selectMenu = 8;
 				}
 
 				if (selectMenu == 9) {
@@ -73,6 +78,9 @@ public class CUI {
 						break;
 					case 5:
 						showReservationList();
+						break;
+					case 6:
+						cancelReservation();
 						break;
 				}
 			}
@@ -157,16 +165,42 @@ public class CUI {
 	}
 
 	public void showReservationList() throws IOException, AppException, RoomException {
-		RoomSqlDao roomDao = new RoomSqlDao();
-        Map<String, String> reservedRooms = roomDao.getReservedRooms();
-        
-        System.out.println("Reservation List:");
-        for (Map.Entry<String, String> entry : reservedRooms.entrySet()) {
-            String reservationNumber = entry.getKey();
-            String roomNumber = entry.getValue();
-            System.out.println("Reservation Number: " + reservationNumber + ", Room Number: " + roomNumber);
-        }
-		
+		try {
+			ReservationManager reservationManager = new ReservationManager();
+			List<Reservation> reservations = reservationManager.getActiveReservations();
+	
+			if (reservations.isEmpty()) {
+				System.out.println("No active reservations found.");
+			} else {
+				System.out.println("Active Reservation List:");
+				for (Reservation reservation : reservations) {
+					System.out.println("Reservation Number: " + reservation.getReservationNumber()
+							+ ", Arrival Date: " + DateUtil.convertToString(reservation.getStayingDate())
+							+ ", Status: " + reservation.getStatus());
+				}
+			}
+		} catch (ReservationException e) {
+			throw new AppException("Failed to retrieve reservations", e);
+		}
+	}
+
+	public void cancelReservation() throws IOException, AppException {
+		System.out.println("Input reservation number to cancel:");
+		System.out.print("> ");
+
+		String reservationNumber = reader.readLine();
+
+		// Validate input
+		if (reservationNumber == null || reservationNumber.isEmpty()) {
+			System.out.println("Invalid input");
+			return;
+		}
+
+		ReserveRoomControl reserveRoomControl = new ReserveRoomControl();
+		reserveRoomControl.cancelReservation(reservationNumber);
+
+		System.out.println("Reservation has been canceled.");
+		System.out.println("Reservation number was " + reservationNumber + ".");
 	}
 
 	public static void main(String[] args) throws Exception {

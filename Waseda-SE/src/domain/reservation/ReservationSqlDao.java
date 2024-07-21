@@ -8,7 +8,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
+import java.util.ArrayList;
+import java.util.List;
 import util.DateUtil;
 
 /**
@@ -129,6 +130,68 @@ public class ReservationSqlDao implements ReservationDao {
 			close(resultSet, statement, connection);
 		}
 	}
+
+	 /**
+     * Cancel a reservation by updating its status to 'canceled'
+     * 
+     * @param reservationNumber The reservation number to cancel
+     * @throws ReservationException If there is an error during the database operation
+     */
+    public void cancelReservation(String reservationNumber) throws ReservationException {
+        StringBuffer sql = new StringBuffer();
+        Statement statement = null;
+        ResultSet resultSet = null;
+        Connection connection = null;
+        try {
+            connection = getConnection();
+            statement = connection.createStatement();
+            sql.append("UPDATE ");
+            sql.append(TABLE_NAME);
+            sql.append(" set status = 'canceled' ");
+            sql.append("where reservationNumber='");
+            sql.append(reservationNumber);
+            sql.append("';");
+            resultSet = statement.executeQuery(sql.toString());
+        } catch (SQLException e) {
+            ReservationException exception = new ReservationException(
+                    ReservationException.CODE_DB_EXEC_QUERY_ERROR, e);
+            exception.getDetailMessages().add("cancelReservation()");
+            throw exception;
+        } finally {
+            close(resultSet, statement, connection);
+        }
+    }
+
+	public List<Reservation> getAllReservations() throws ReservationException {
+		List<Reservation> reservations = new ArrayList<>();
+		StringBuffer sql = new StringBuffer();
+		Statement statement = null;
+		ResultSet resultSet = null;
+		Connection connection = null;
+		try {
+			connection = getConnection();
+			statement = connection.createStatement();
+			sql.append("SELECT reservationnumber, stayingdate, status FROM ");
+			sql.append(TABLE_NAME);
+			resultSet = statement.executeQuery(sql.toString());
+			while (resultSet.next()) {
+				Reservation reservation = new Reservation();
+				reservation.setReservationNumber(resultSet.getString("reservationnumber"));
+				reservation.setStatus(resultSet.getString("status"));
+				reservation.setStayingDate(DateUtil.convertToDate(resultSet.getString("stayingdate")));
+				reservations.add(reservation);
+			}
+		} catch (SQLException e) {
+			ReservationException exception = new ReservationException(
+					ReservationException.CODE_DB_EXEC_QUERY_ERROR, e);
+			exception.getDetailMessages().add("getAllReservations()");
+			throw exception;
+		} finally {
+			close(resultSet, statement, connection);
+		}
+		return reservations;
+	}
+	
 
 	private Connection getConnection() throws ReservationException {
 		Connection connection = null;

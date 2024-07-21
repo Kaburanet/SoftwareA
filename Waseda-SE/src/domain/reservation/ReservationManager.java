@@ -5,6 +5,8 @@ package domain.reservation;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import domain.DaoFactory;
 
@@ -70,6 +72,60 @@ public class ReservationManager {
 		return stayingDate;
 	}
 
+	public void cancelReservation(String reservationNumber) throws ReservationException, NullPointerException {
+        if (reservationNumber == null) {
+            throw new NullPointerException("reservationNumber");
+        }
+
+        ReservationDao reservationDao = getReservationDao();
+        Reservation reservation = reservationDao.getReservation(reservationNumber);
+        // If corresponding reservation does not exist
+        if (reservation == null) {
+            ReservationException exception = new ReservationException(ReservationException.CODE_RESERVATION_NOT_FOUND);
+            exception.getDetailMessages().add("reservation_number[" + reservationNumber + "]");
+            throw exception;
+        }
+        // If reservation has already been consumed
+        if (reservation.getStatus().equals(Reservation.RESERVATION_STATUS_CONSUME)) {
+            ReservationException exception = new ReservationException(ReservationException.CODE_RESERVATION_ALREADY_CONSUMED);
+            exception.getDetailMessages().add("reservation_number[" + reservationNumber + "]");
+            throw exception;
+        }
+
+        // Cancel the reservation
+        reservationDao.cancelReservation(reservationNumber);
+    }
+
+	public Date retrieveStayingDate(String reservationNumber) throws ReservationException, NullPointerException {
+        if (reservationNumber == null) {
+            throw new NullPointerException("reservationNumber");
+        }
+
+        ReservationDao reservationDao = getReservationDao();
+        Reservation reservation = reservationDao.getReservation(reservationNumber);
+        // If corresponding reservation does not exist
+        if (reservation == null) {
+            ReservationException exception = new ReservationException(ReservationException.CODE_RESERVATION_NOT_FOUND);
+            exception.getDetailMessages().add("reservation_number[" + reservationNumber + "]");
+            throw exception;
+        }
+
+        return reservation.getStayingDate();
+    }
+
+	public List<Reservation> getAllReservations() throws ReservationException {
+		ReservationDao reservationDao = getReservationDao();
+		return reservationDao.getAllReservations();
+    }
+
+	public List<Reservation> getActiveReservations() throws ReservationException {
+        List<Reservation> allReservations = getAllReservations();
+        return allReservations.stream()
+                .filter(reservation -> !Reservation.RESERVATION_STATUS_CONSUME.equals(reservation.getStatus()) 
+                        && !"canceled".equals(reservation.getStatus()))
+                .collect(Collectors.toList());
+    }
+	
 	private ReservationDao getReservationDao() {
 		return DaoFactory.getInstance().getReservationDao();
 	}
