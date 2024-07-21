@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import domain.room.RoomException;
+import domain.room.RoomManager;
 import util.DateUtil;
 import app.AppException;
 import app.checkin.CheckInRoomForm;
@@ -20,6 +21,9 @@ import app.reservation.ReserveRoomForm;
 import domain.reservation.Reservation;
 import domain.reservation.ReservationException;
 import domain.reservation.ReservationManager;
+import domain.room.AvailableQty;
+import domain.room.AvailableQtyDao;
+import domain.room.AvailableQtySqlDao;
 import domain.room.Room;
 import domain.room.RoomSqlDao;
 
@@ -46,7 +50,7 @@ public class CUI {
 				System.out.println("1: Reservation");
 				System.out.println("2: Check-in");
 				System.out.println("3: Check-out");
-				System.out.println("4: Empty room List");
+				System.out.println("4: Empty Rooms");
 				System.out.println("5: Reservation List");
 				System.out.println("6: Cancel Reservation");
 				System.out.println("9: End");
@@ -74,7 +78,7 @@ public class CUI {
 						checkOutRoom();
 						break;
 					case 4:
-						showEmptyRoomList();
+						showEmptyRooms();
 						break;
 					case 5:
 						showReservationList();
@@ -155,13 +159,26 @@ public class CUI {
 		System.out.println("Check-out has been completed.");
 	}
 
-	public void showEmptyRoomList() throws IOException, AppException, RoomException {
-		System.out.println("Avalable Room List");
-		RoomSqlDao roomSqlDao = new RoomSqlDao();
-		List<Room> emptyRoomList = roomSqlDao.getEmptyRooms();
-		for (int i = 0; i < emptyRoomList.size(); i++) {
-			System.out.println(emptyRoomList.get(i).getRoomNumber());
+	public void showEmptyRooms() throws IOException, AppException, RoomException {
+		System.out.println("Input arrival date in the form of yyyy/mm/dd");
+		System.out.print("> ");
+
+		String dateStr = reader.readLine();
+
+		Date stayingDate = DateUtil.convertToDate(dateStr);
+		if(stayingDate == null){
+			System.err.println("Invalid input");
+			return;
 		}
+		System.out.println("The Number of Available Rooms");
+		AvailableQtySqlDao availableQtySqlDao = new AvailableQtySqlDao();
+		AvailableQty availableQty = availableQtySqlDao.getAvailableQty(stayingDate);
+		if(availableQty == null){
+			System.out.println("5");
+		}else{
+			System.out.println(availableQty.getQty());
+		}
+		
 	}
 
 	public void showReservationList() throws IOException, AppException, RoomException {
