@@ -131,6 +131,36 @@ public class RoomSqlDao implements RoomDao {
 		return emptyRoomList;
 	}
 
+	public List getReservedRooms(String datestr) throws RoomException {
+		StringBuffer sql = new StringBuffer();
+		Statement statement = null;
+		ResultSet resultSet = null;
+		Connection connection = null;
+		List emptyRoomList = new ArrayList();
+		try {
+			connection = getConnection();
+			statement = connection.createStatement();
+			sql.append("SELECT roomnumber FROM ");
+			sql.append(TABLE_NAME);
+			sql.append(" WHERE stayingdate='"+ datestr +"';");
+			resultSet = statement.executeQuery(sql.toString());
+			while (resultSet.next()) {
+				Room room = new Room();
+				room.setRoomNumber(resultSet.getString("roomnumber"));
+				emptyRoomList.add(room);
+			}
+		}
+		catch (SQLException e) {
+			RoomException exception = new RoomException(RoomException.CODE_DB_EXEC_QUERY_ERROR, e);
+			exception.getDetailMessages().add("getEmptyRooms()");
+			throw exception;
+		}
+		finally {
+			close(resultSet, statement, connection);
+		}
+		return emptyRoomList;
+	}
+
 	/**
 	 * @see domain.room.RoomDao#updateRoom(domain.room.Room)
 	 */
