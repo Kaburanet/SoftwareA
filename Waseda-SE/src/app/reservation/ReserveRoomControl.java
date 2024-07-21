@@ -8,6 +8,8 @@ import java.util.Date;
 import app.AppException;
 import app.ManagerFactory;
 import domain.reservation.ReservationManager;
+import domain.payment.PaymentException;
+import domain.payment.PaymentManager;
 import domain.reservation.ReservationException;
 import domain.room.RoomManager;
 import domain.room.RoomException;
@@ -19,26 +21,50 @@ import domain.room.RoomException;
 public class ReserveRoomControl {
 
 	public String makeReservation(Date stayingDate) throws AppException {
-		//Permitting only one night so that change amount of availableQty is always -1
+		// Permitting only one night so that change amount of availableQty is always -1
 		int availableQtyOfChange = -1;
 		try {
-			//Update number of available rooms
+			// Update number of available rooms
 			RoomManager roomManager = getRoomManager();
 			roomManager.updateRoomAvailableQty(stayingDate, availableQtyOfChange);
 
-			//Create reservation
+			// Create reservation
 			ReservationManager reservationManager = getReservationManager();
 			String reservationNumber = reservationManager.createReservation(stayingDate);
 			return reservationNumber;
-		}
-		catch (RoomException e) {
+		} catch (RoomException e) {
+			AppException exception = new AppException("Failed to reserve", e);
+			exception.getDetailMessages().add(e.getMessage());
+			exception.getDetailMessages().addAll(e.getDetailMessages());
+			throw exception;
+		} catch (ReservationException e) {
 			AppException exception = new AppException("Failed to reserve", e);
 			exception.getDetailMessages().add(e.getMessage());
 			exception.getDetailMessages().addAll(e.getDetailMessages());
 			throw exception;
 		}
-		catch (ReservationException e) {
-			AppException exception = new AppException("Failed to reserve", e);
+	}
+
+	public void cancelReservation(String reservationNumber) throws AppException {
+		try {
+			// Retrieve reservation details
+			ReservationManager reservationManager = getReservationManager();
+			Date stayingDate = reservationManager.retrieveStayingDate(reservationNumber);
+
+			// Cancel reservation
+			reservationManager.cancelReservation(reservationNumber);
+
+			// Update number of available rooms
+			RoomManager roomManager = getRoomManager();
+			roomManager.updateRoomAvailableQty(stayingDate, 1); // Increment the available quantity by 1
+
+		} catch (ReservationException e) {
+			AppException exception = new AppException("Failed to cancel reservation", e);
+			exception.getDetailMessages().add(e.getMessage());
+			exception.getDetailMessages().addAll(e.getDetailMessages());
+			throw exception;
+		} catch (RoomException e) {
+			AppException exception = new AppException("Failed to cancel reservation", e);
 			exception.getDetailMessages().add(e.getMessage());
 			exception.getDetailMessages().addAll(e.getDetailMessages());
 			throw exception;
@@ -52,4 +78,5 @@ public class ReserveRoomControl {
 	private ReservationManager getReservationManager() {
 		return ManagerFactory.getInstance().getReservationManager();
 	}
+
 }
