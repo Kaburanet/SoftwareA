@@ -10,6 +10,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import util.DateUtil;
 
@@ -167,6 +169,36 @@ public class RoomSqlDao implements RoomDao {
 		}
 
 	}
+
+	//予約番号と予約済みの部屋番号をリスト形式で返す関数
+	public Map<String, String> getReservedRooms() throws RoomException {
+		StringBuffer sql = new StringBuffer();
+		Statement statement = null;
+		ResultSet resultSet = null;
+		Connection connection = null;
+		Map<String, String> reservedRoomMap = new HashMap<>();
+		try {
+			connection = getConnection();
+			statement = connection.createStatement();
+			sql.append("SELECT r.reservationnumber, ro.roomnumber ");
+			sql.append("FROM RESERVATION r ");
+			sql.append("JOIN ROOM ro ON r.stayingdate = ro.stayingdate ");
+			sql.append("WHERE ro.stayingdate IS NOT NULL AND ro.stayingdate <> '';");
+			resultSet = statement.executeQuery(sql.toString());
+			while (resultSet.next()) {
+				reservedRoomMap.put(resultSet.getString("reservationnumber"), resultSet.getString("roomnumber"));
+			}
+		} catch (SQLException e) {
+			RoomException exception = new RoomException(RoomException.CODE_DB_EXEC_QUERY_ERROR, e);
+			exception.getDetailMessages().add("getReservedRooms() - SQL Error: " + e.getMessage());
+			throw exception;
+		} finally {
+			close(resultSet, statement, connection);
+		}
+		return reservedRoomMap;
+	}
+
+
 
 	private Connection getConnection() throws RoomException {
 		Connection connection = null;
