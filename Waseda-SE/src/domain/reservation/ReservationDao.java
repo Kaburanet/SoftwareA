@@ -18,7 +18,7 @@ public interface ReservationDao {
 
 	public abstract void createReservation(Reservation reservation) throws ReservationException;
 
-	public abstract void cancelReservation(String reservationNumber) throws ReservationException; // 追加
+	public abstract void cancelReservation(Reservation reservation) throws ReservationException; // 追加
 
 	public abstract List<Reservation> getAllReservations() throws ReservationException;	//追加
 }
