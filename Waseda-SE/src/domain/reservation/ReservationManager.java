@@ -93,7 +93,8 @@ public class ReservationManager {
         }
 
         // Cancel the reservation
-        reservationDao.cancelReservation(reservationNumber);
+		reservation.setStatus(Reservation.RESERVATION_STATUS_CANCELED);
+        reservationDao.cancelReservation(reservation);
     }
 
 	public Date retrieveStayingDate(String reservationNumber) throws ReservationException, NullPointerException {

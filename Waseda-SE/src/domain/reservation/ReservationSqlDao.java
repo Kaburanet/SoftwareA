@@ -137,7 +137,7 @@ public class ReservationSqlDao implements ReservationDao {
      * @param reservationNumber The reservation number to cancel
      * @throws ReservationException If there is an error during the database operation
      */
-    public void cancelReservation(String reservationNumber) throws ReservationException {
+    public void cancelReservation(Reservation reservation) throws ReservationException {
         StringBuffer sql = new StringBuffer();
         Statement statement = null;
         ResultSet resultSet = null;
@@ -147,9 +147,10 @@ public class ReservationSqlDao implements ReservationDao {
             statement = connection.createStatement();
             sql.append("UPDATE ");
             sql.append(TABLE_NAME);
-            sql.append(" set status = 'canceled' ");
-            sql.append("where reservationNumber='");
-            sql.append(reservationNumber);
+            sql.append(" set status = '");
+			sql.append(reservation.getStatus());
+            sql.append("' where reservationNumber='");
+            sql.append(reservation.getReservationNumber());
             sql.append("';");
             resultSet = statement.executeQuery(sql.toString());
         } catch (SQLException e) {
